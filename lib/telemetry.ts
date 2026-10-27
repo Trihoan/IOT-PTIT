@@ -38,5 +38,5 @@ export function startTelemetry() {
   });
 }
 export function telemetryStatus() {
-  return { source: process.env.MQTT_URL ? 'mqtt' : usesMysql() ? 'database' : 'demo', connected: Boolean(state.telemetryClient?.connected), error: state.telemetryError || null };
+  return { source: process.env.MQTT_URL ? 'mqtt' : usesMysql() ? 'database' : 'memory', connected: Boolean(state.telemetryClient?.connected), error: state.telemetryError || null };
 }

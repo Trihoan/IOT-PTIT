@@ -1,3 +1,4 @@
+import { commandDevice } from './mqtt-control';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import { getPool, usesMysql } from './mysql';
 import { db, addAction, type Device, type ActionRecord } from './store';
@@ -12,12 +13,14 @@ export async function getActions(): Promise<ActionRecord[]> {
   const [rows] = await getPool().query<RowDataPacket[]>('SELECT a.*, d.device_name FROM `action` a JOIN devices d ON d.device_id=a.device_id ORDER BY a.action_id DESC');
   return rows.map(r => ({ id: r.action_id, deviceId: r.device_id, device: r.device_name, actionType: r.action_type, timestamp: new Date(r.timestamp).toISOString() }));
 }
-// Device commands are simulated until MQTT is configured.
+// Only persist a requested state after the ESP acknowledges it.
 export async function controlDevice(id: number, state?: boolean) {
   if (!usesMysql()) {
     const device = db.devices.find(d => d.id === id);
     if (!device) return null;
-    device.status = state ?? !device.status;
+    const next = state ?? !device.status;
+    await commandDevice(id, next);
+    device.status = next;
     device.lastUpdated = new Date().toISOString();
     return { device, action: addAction(device, device.status) };
   }
@@ -27,6 +30,7 @@ export async function controlDevice(id: number, state?: boolean) {
     const [rows] = await connection.execute<RowDataPacket[]>('SELECT * FROM devices WHERE device_id=? FOR UPDATE', [id]);
     if (!rows.length) { await connection.rollback(); return null; }
     const next = state ?? !Boolean(rows[0].status);
+    await commandDevice(id, next);
     const timestamp = new Date().toISOString();
     await connection.execute('UPDATE devices SET status=?, last_updated=UTC_TIMESTAMP(3) WHERE device_id=?', [next, id]);
     const [result] = await connection.execute<ResultSetHeader>('INSERT INTO `action` (device_id,action_type) VALUES (?,?)', [id, next ? 'ON' : 'OFF']);
@@ -39,29 +43,11 @@ export async function controlDevice(id: number, state?: boolean) {
 }
 
 export async function controlAllDevices(state: boolean) {
-  if (!usesMysql()) {
-    const actions = db.devices.map(device => {
-      device.status = state;
-      device.lastUpdated = new Date().toISOString();
-      return addAction(device, state);
-    });
-    return { devices: db.devices, actions };
+  const devices: Device[] = [];
+  const actions: ActionRecord[] = [];
+  for (const device of await getDevices()) {
+    const result = await controlDevice(device.id, state);
+    if (result) { devices.push(result.device); actions.push(result.action); }
   }
-  const connection = await getPool().getConnection();
-  try {
-    await connection.beginTransaction();
-    const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM devices ORDER BY device_id FOR UPDATE');
-    const timestamp = new Date().toISOString();
-    const devices: Device[] = [];
-    const actions: ActionRecord[] = [];
-    for (const row of rows) {
-      await connection.execute('UPDATE devices SET status=?,last_updated=UTC_TIMESTAMP(3) WHERE device_id=?', [state, row.device_id]);
-      const [result] = await connection.execute<ResultSetHeader>('INSERT INTO `action` (device_id,action_type) VALUES (?,?)', [row.device_id, state ? 'ON' : 'OFF']);
-      devices.push({ id: row.device_id, name: row.device_name, status: state, lastUpdated: timestamp });
-      actions.push({ id: result.insertId, deviceId: row.device_id, device: row.device_name, actionType: state ? 'ON' : 'OFF', timestamp });
-    }
-    await connection.commit();
-    return { devices, actions };
-  } catch (error) { await connection.rollback(); throw error; }
-  finally { connection.release(); }
+  return { devices, actions };
 }

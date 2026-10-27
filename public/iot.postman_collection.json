@@ -1,0 +1,256 @@
+{
+  "info": {
+    "name": "IoT Smart Monitoring",
+    "description": "Local API examples. Control requests operate real relays. No credentials included.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Cảm biến",
+      "item": [
+        {
+          "name": "GET /api/sensors/live",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/sensors/live",
+            "description": "Dữ liệu dashboard: MQTT mới hoặc mô phỏng có source=demo."
+          }
+        },
+        {
+          "name": "GET /api/sensors/latest",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/sensors/latest",
+            "description": "Giá trị mới nhất trong kho thật; không tạo dữ liệu mô phỏng."
+          }
+        },
+        {
+          "name": "GET /api/sensors/history?page=1&limit=20",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/sensors/history?page=1&limit=20",
+            "description": "Lịch sử thật, hỗ trợ page, limit, from, to (YYYY-MM-DD)."
+          }
+        },
+        {
+          "name": "GET /api/sensors/1/chart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/sensors/1/chart",
+            "description": "Biểu đồ cảm biến id=1/2/3; hỗ trợ from và to."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Thiết bị",
+      "item": [
+        {
+          "name": "GET /api/devices/status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/devices/status",
+            "description": "Trạng thái đã lưu của ba LED."
+          }
+        },
+        {
+          "name": "GET /api/leds/1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/leds/1",
+            "description": "Trạng thái đã lưu của một LED."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Điều khiển",
+      "item": [
+        {
+          "name": "POST /api/leds/control",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/leds/control",
+            "description": "Điều khiển relay thật; state ON hoặc OFF, led_id từ 1 đến 3. Chờ ACK tối đa 8 giây.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"led_id\": 1,\n  \"state\": \"ON\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/leds/control-all",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/leds/control-all",
+            "description": "Điều khiển lần lượt cả ba relay thật. Có thể hoàn tất một phần nếu mất ACK.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"OFF\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PATCH /api/leds/1/toggle",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/leds/1/toggle",
+            "description": "Đảo trạng thái relay thật theo trạng thái backend đang lưu."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lịch sử",
+      "item": [
+        {
+          "name": "GET /api/actions/history?page=1&limit=20",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/actions/history?page=1&limit=20",
+            "description": "Nhật ký các lệnh đã được mạch xác nhận."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tài khoản",
+      "item": [
+        {
+          "name": "POST /api/auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Nhập mật khẩu của bạn; token trả về hiện là demo-session.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"HoanIOT\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Tạo tài khoản trong RAM, mất khi tiến trình khởi động lại.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sinh viên IoT\",\n  \"email\": \"student@example.com\",\n  \"password\": \"{{password}}\",\n  \"confirmPassword\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lịch hẹn",
+      "item": [
+        {
+          "name": "GET /api/schedules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/schedules",
+            "description": "Danh sách cấu hình lịch hẹn trong RAM."
+          }
+        },
+        {
+          "name": "PUT /api/schedules",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/schedules",
+            "description": "Lưu lịch hẹn; chưa có bộ thực thi tự động. time là HH:mm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": 1,\n  \"time\": \"20:30\",\n  \"state\": \"OFF\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/schedules/123",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/schedules/123",
+            "description": "Thay 123 bằng id nhận được khi tạo lịch."
+          }
+        }
+      ]
+    }
+  ]
+}

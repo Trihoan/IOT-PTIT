@@ -1,0 +1,17 @@
+export const apiExamples = [
+  { group: 'Cảm biến', method: 'GET', path: '/api/sensors/live', description: 'Dữ liệu dashboard: MQTT mới hoặc mô phỏng có source=demo.' },
+  { group: 'Cảm biến', method: 'GET', path: '/api/sensors/latest', description: 'Giá trị mới nhất trong kho thật; không tạo dữ liệu mô phỏng.' },
+  { group: 'Cảm biến', method: 'GET', path: '/api/sensors/history?page=1&limit=20', description: 'Lịch sử thật, hỗ trợ page, limit, from, to (YYYY-MM-DD).' },
+  { group: 'Cảm biến', method: 'GET', path: '/api/sensors/1/chart', description: 'Biểu đồ cảm biến id=1/2/3; hỗ trợ from và to.' },
+  { group: 'Thiết bị', method: 'GET', path: '/api/devices/status', description: 'Trạng thái đã lưu của ba LED.' },
+  { group: 'Thiết bị', method: 'GET', path: '/api/leds/1', description: 'Trạng thái đã lưu của một LED.' },
+  { group: 'Điều khiển', method: 'POST', path: '/api/leds/control', description: 'Điều khiển relay thật; state ON hoặc OFF, led_id từ 1 đến 3. Chờ ACK tối đa 8 giây.', body: { led_id: 1, state: 'ON' } },
+  { group: 'Điều khiển', method: 'POST', path: '/api/leds/control-all', description: 'Điều khiển lần lượt cả ba relay thật. Có thể hoàn tất một phần nếu mất ACK.', body: { state: 'OFF' } },
+  { group: 'Điều khiển', method: 'PATCH', path: '/api/leds/1/toggle', description: 'Đảo trạng thái relay thật theo trạng thái backend đang lưu.' },
+  { group: 'Lịch sử', method: 'GET', path: '/api/actions/history?page=1&limit=20', description: 'Nhật ký các lệnh đã được mạch xác nhận.' },
+  { group: 'Tài khoản', method: 'POST', path: '/api/auth/login', description: 'Nhập mật khẩu của bạn; token trả về hiện là demo-session.', body: { username: 'HoanIOT', password: '{{password}}' } },
+  { group: 'Tài khoản', method: 'POST', path: '/api/auth/register', description: 'Tạo tài khoản trong RAM, mất khi tiến trình khởi động lại.', body: { name: 'Sinh viên IoT', email: 'student@example.com', password: '{{password}}', confirmPassword: '{{password}}' } },
+  { group: 'Lịch hẹn', method: 'GET', path: '/api/schedules', description: 'Danh sách cấu hình lịch hẹn trong RAM.' },
+  { group: 'Lịch hẹn', method: 'PUT', path: '/api/schedules', description: 'Lưu lịch hẹn; chưa có bộ thực thi tự động. time là HH:mm.', body: { deviceId: 1, time: '20:30', state: 'OFF' } },
+  { group: 'Lịch hẹn', method: 'DELETE', path: '/api/schedules/123', description: 'Thay 123 bằng id nhận được khi tạo lịch.' },
+] as const;
