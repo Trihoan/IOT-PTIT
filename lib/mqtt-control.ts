@@ -29,6 +29,7 @@ function getClient() {
 }
 
 export async function commandDevice(id: number, on: boolean) {
+  if (process.env.MQTT_SIMULATION === 'true') throw new Error('Chưa kết nối MQTT.');
   if (pending.has(id)) throw new Error('Thiết bị đang xử lý một lệnh khác.');
   const client = getClient();
   const action = on ? 'ON' : 'OFF';

@@ -8,7 +8,7 @@ export async function GET() {
   startTelemetry();
   const now = Date.now();
   const status = telemetryStatus();
-  const stored = await getSensors().catch(() => []);
+  const stored = status.simulated ? [] : await getSensors().catch(() => []);
   const real = status.connected && hasFreshSensors(stored, now);
   const records = real ? stored : demoReadings(now);
   const latest = [1, 2, 3].map(id => records.filter(row => row.sensorId === id).at(-1)).filter(Boolean);

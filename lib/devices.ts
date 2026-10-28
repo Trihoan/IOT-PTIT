@@ -4,22 +4,22 @@ import { getPool, usesMysql } from './mysql';
 import { db, addAction, type Device, type ActionRecord } from './store';
 
 export async function getDevices(): Promise<Device[]> {
-  if (!usesMysql()) return db.devices;
+  if (process.env.MQTT_SIMULATION === 'true' || !usesMysql()) return db.devices;
   const [rows] = await getPool().query<RowDataPacket[]>('SELECT device_id, device_name, status, last_updated FROM devices ORDER BY device_id');
   return rows.map(r => ({ id: r.device_id, name: r.device_name, status: Boolean(r.status), lastUpdated: new Date(r.last_updated).toISOString() }));
 }
 export async function getActions(): Promise<ActionRecord[]> {
-  if (!usesMysql()) return db.actions;
+  if (process.env.MQTT_SIMULATION === 'true' || !usesMysql()) return db.actions;
   const [rows] = await getPool().query<RowDataPacket[]>('SELECT a.*, d.device_name FROM `action` a JOIN devices d ON d.device_id=a.device_id ORDER BY a.action_id DESC');
   return rows.map(r => ({ id: r.action_id, deviceId: r.device_id, device: r.device_name, actionType: r.action_type, timestamp: new Date(r.timestamp).toISOString() }));
 }
-// Only persist a requested state after the ESP acknowledges it.
+// Chế độ offline lưu trạng thái trong RAM; chế độ thật chỉ lưu sau ACK.
 export async function controlDevice(id: number, state?: boolean) {
-  if (!usesMysql()) {
+  if (process.env.MQTT_SIMULATION === 'true' || !usesMysql()) {
     const device = db.devices.find(d => d.id === id);
     if (!device) return null;
     const next = state ?? !device.status;
-    await commandDevice(id, next);
+    if (process.env.MQTT_SIMULATION !== 'true') await commandDevice(id, next);
     device.status = next;
     device.lastUpdated = new Date().toISOString();
     return { device, action: addAction(device, device.status) };

@@ -4,6 +4,7 @@ import { getPool, usesMysql } from './mysql';
 
 const state = globalThis as typeof globalThis & { telemetryClient?: MqttClient; telemetryQueue?: Promise<void>; telemetryError?: string };
 export function startTelemetry() {
+  if ((process.env.MQTT_SIMULATION === 'true')) { state.telemetryClient?.end(true); state.telemetryClient = undefined; return; }
   if (!process.env.MQTT_URL || state.telemetryClient) return;
   const client = state.telemetryClient = mqtt.connect(process.env.MQTT_URL, {
     username: process.env.MQTT_USERNAME, password: process.env.MQTT_PASSWORD,
@@ -38,5 +39,6 @@ export function startTelemetry() {
   });
 }
 export function telemetryStatus() {
+  if ((process.env.MQTT_SIMULATION === 'true')) return { source: 'demo', connected: false, simulated: true, error: null };
   return { source: process.env.MQTT_URL ? 'mqtt' : usesMysql() ? 'database' : 'memory', connected: Boolean(state.telemetryClient?.connected), error: state.telemetryError || null };
 }

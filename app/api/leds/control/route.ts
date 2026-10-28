@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const result = await controlDevice(id, state === 'ON');
     if (!result) return NextResponse.json({ status: 'error', message: 'Không tìm thấy thiết bị.' }, { status: 404 });
-    return NextResponse.json({ status: 'success', ...result, mqtt: { published: true, acknowledged: true, topic: 'hoan/device/control' } });
+    return NextResponse.json({ status: 'success', ...result, mqtt: { published: process.env.MQTT_SIMULATION !== 'true', acknowledged: process.env.MQTT_SIMULATION !== 'true', topic: 'hoan/device/control' } });
   } catch (error) {
     return NextResponse.json({ status: 'error', message: error instanceof Error ? error.message : 'Không điều khiển được thiết bị.' }, { status: 503 });
   }

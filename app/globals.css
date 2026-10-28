@@ -48,3 +48,8 @@
 .chart-empty{display:grid;place-items:center;flex:1;min-height:130px;color:#8290a7;font-size:12px}
 .live-chart-frame{width:100%;min-width:0;overflow:hidden}.live-chart-frame .line-chart{display:block;width:100%}.project-link{display:flex;align-items:center;min-width:0;gap:4px}.project-link>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.project-link>span:last-child{flex:none}
 .pagination>nav{display:flex;align-items:center;gap:5px}
+
+/* Ba thẻ cảm biến chia đều hàng trên màn hình lớn. */
+@media (min-width: 851px) {
+  .sensor-stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
