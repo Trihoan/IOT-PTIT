@@ -5,3 +5,6 @@ out
 .env*.local
 *.tsbuildinfo
 scripts/mqtt-*.log
+
+BE/dist/
+BE/scripts/mqtt-*.log

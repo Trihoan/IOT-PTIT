@@ -1,23 +1,19 @@
 {
-  "name": "iot-monitoring-dashboard",
+  "name": "iot-monitoring",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "FE",
+    "BE"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "mqtt": "^5.16.1",
-    "mysql2": "^3.24.6",
-    "next": "^15.5.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "typescript": "^5.0.0"
+    "dev": "node scripts/dev.cjs",
+    "dev:fe": "npm run dev --workspace=FE",
+    "dev:be": "npm run dev --workspace=BE",
+    "build": "npm run build --workspace=BE && npm run build --workspace=FE",
+    "typecheck": "npm run typecheck --workspace=BE && npm run typecheck --workspace=FE",
+    "test": "npm test --workspace=BE",
+    "start:fe": "npm start --workspace=FE",
+    "start:be": "npm start --workspace=BE"
   }
 }

@@ -4,44 +4,70 @@
 
 ## 1. Chạy dự án
 
-Cần Node.js 20 trở lên và npm.
+Cần Node.js 22.9 trở lên và npm. FE và BE là hai ứng dụng riêng, quản lý bằng npm workspaces.
+
+Tại thư mục gốc `IOT`, cài thư viện một lần:
 
 ```powershell
 npm install
 ```
 
-Nếu chưa có `.env.local`, tạo từ file mẫu:
+Nếu chưa có file cấu hình, tạo từ mẫu:
 
 ```powershell
-Copy-Item .env.example .env.local
+Copy-Item FE/.env.example FE/.env.local
+Copy-Item BE/.env.example BE/.env.local
 ```
 
-### Chạy không cần MQTT
-
-Đặt các giá trị sau trong `.env.local`:
+Cấu hình `FE/.env.local`:
 
 ```dotenv
+API_URL=http://127.0.0.1:4000
+```
+
+Cấu hình `BE/.env.local` để chạy không cần MQTT:
+
+```dotenv
+PORT=4000
 DB_DRIVER=memory
 MQTT_SIMULATION=true
 ```
 
-Chế độ này không kết nối broker. Bật/tắt từng đèn, bật/tắt tất cả và lịch sử được xử lý trong RAM; cảm biến dùng dữ liệu mẫu. Giao diện hiển thị “Chưa kết nối MQTT”.
+Chạy FE và BE cùng lúc tại thư mục gốc:
 
 ```powershell
 npm run dev
 ```
 
-- Ứng dụng: http://localhost:3000
-- Tài liệu và thử API: http://localhost:3000/docs
+Nhấn Ctrl+C để dừng cả hai. Hoặc mở hai terminal để chạy riêng:
+
+```powershell
+# Terminal 1: backend
+npm run dev:be
+```
+
+```powershell
+# Terminal 2: frontend
+npm run dev:fe
+```
+
+- Giao diện FE: http://localhost:3000
+- Trang thử API: http://localhost:3000/docs
+- API BE trực tiếp: http://127.0.0.1:4000/api/devices/status
 - Postman Collection: http://localhost:3000/iot.postman_collection.json
 
-Đăng nhập bằng tài khoản `HoanIOT` và mật khẩu đã cấu hình. Nếu PowerShell chặn `npm.ps1`, dùng `npm.cmd` thay cho `npm`.
+Có thể chạy riêng trong từng thư mục bằng `cd FE` hoặc `cd BE`, rồi `npm run dev`. Nhấn Ctrl+C để dừng từng phần. Nếu PowerShell chặn `npm.ps1`, dùng `npm.cmd`.
+
+FE chuyển các yêu cầu `/api/*` tới BE theo `API_URL` trong `FE/next.config.mjs`. Trình duyệt gọi cùng địa chỉ FE, không cần cấu hình CORS. Phải chạy cả hai để đăng nhập và sử dụng dữ liệu. BE chạy độc lập để thử bằng Postman hoặc phục vụ mạch MQTT.
+
+Đăng nhập bằng tài khoản `HoanIOT` và mật khẩu đã cấu hình. Khi `MQTT_SIMULATION=true`, bật/tắt và lịch sử dùng RAM, cảm biến dùng dữ liệu mẫu; không gửi lệnh đến mạch thật.
 
 ### Kết nối MQTT thật
 
-Sửa `.env.local` rồi khởi động lại server:
+Sửa `BE/.env.local` rồi khởi động lại BE:
 
 ```dotenv
+PORT=4000
 DB_DRIVER=memory
 MQTT_SIMULATION=false
 MQTT_URL=mqtt://127.0.0.1:1883
@@ -49,73 +75,75 @@ MQTT_USERNAME=YOUR_MQTT_USER
 MQTT_PASSWORD="YOUR_MQTT_PASSWORD"
 ```
 
-`127.0.0.1` dùng khi backend và Mosquitto cùng máy. ESP8266 dùng IP LAN của broker. Xem [hướng dẫn kết nối](HUONG-DAN-KET-NOI.md) để cấu hình mạch, topic và broker.
+`127.0.0.1` dùng khi BE và Mosquitto cùng máy. ESP8266 dùng IP LAN của broker. Xem [hướng dẫn kết nối](HUONG-DAN-KET-NOI.md).
 
 ### Kiểm tra và build
 
+Chạy tại thư mục gốc:
+
 ```powershell
 npm run typecheck
-node scripts/check-offline.cjs
-node scripts/check-mqtt-control.cjs
+npm test
 npm run build
-npm start
 ```
 
-- `check-offline.cjs`: kiểm tra bật/tắt, lịch sử và cảm biến khi không có MQTT hoặc MySQL.
-- `check-mqtt-control.cjs`: kiểm tra ACK, timeout và lệnh đồng thời bằng client giả lập.
-- `npm start`: chạy bản production sau khi build.
+Sau build, mở hai terminal và chạy `npm run start:be`, `npm run start:fe`. Đổi `API_URL` cần build lại FE trước khi chạy production.
+
+`npm test` kiểm tra offline, MQTT bằng client giả lập và toàn bộ API qua HTTP; không điều khiển mạch thật. Có thể chạy riêng trong BE bằng `npm test`; kiểm tra MySQL bằng `npm run check:database`.
 
 ## 2. Cấu trúc thư mục
 
 ```text
 IOT/
-├── app/
-│   ├── page.tsx                 Điểm vào của Next.js
-│   ├── layout.tsx               Khung HTML và metadata
-│   ├── globals.css              CSS chung
-│   ├── docs/                    Trang thử API
-│   └── api/                     API backend
-├── src/
-│   ├── App.tsx                  Khung ứng dụng và chuyển màn hình
-│   ├── screens/
-│   │   ├── Login.tsx            Đăng nhập, đăng ký
-│   │   ├── Dashboard.tsx        Điều khiển đèn và biểu đồ
-│   │   ├── Sensors.tsx          Dữ liệu cảm biến
-│   │   ├── History.tsx          Lịch sử bật/tắt
-│   │   └── Profile.tsx          Thông tin cá nhân
-│   ├── components/
-│   │   ├── LiveChart.tsx        Biểu đồ cảm biến
-│   │   ├── Pagination.tsx       Phân trang
-│   │   └── ui.tsx               Icon, công tắc, thẻ và bảng
-│   ├── hooks/
-│   │   ├── useIotDashboard.ts   State, gọi API, xử lý thao tác
-│   │   └── mappers.ts           Chuyển dữ liệu API sang dữ liệu hiển thị
-│   ├── types.ts                Kiểu dữ liệu giao diện
-│   └── constants.ts            Giá trị khởi tạo, tên màn hình
-├── lib/                        Xử lý MQTT, database, dữ liệu và đăng nhập
-├── data/account.json           Tài khoản cố định, mật khẩu băm
-├── database/                   Schema và script MySQL
-├── scripts/                    Kiểm thử và cấu hình broker
-├── public/                     Postman Collection
-├── .env.example                Mẫu cấu hình
-├── .env.local                  Cấu hình riêng, không đưa lên Git
-├── package.json
-├── next.config.mjs
-└── tsconfig.json
+├── FE/                            Frontend Next.js / React
+│   ├── app/
+│   │   ├── page.tsx               Điểm vào giao diện
+│   │   ├── layout.tsx             Khung HTML và CSS
+│   │   ├── globals.css
+│   │   └── docs/                  Trang thử API
+│   ├── src/
+│   │   ├── App.tsx                Khung ứng dụng
+│   │   ├── screens/               Login, Dashboard, Sensors, History, Profile
+│   │   ├── components/            Biểu đồ, phân trang, thành phần dùng chung
+│   │   ├── hooks/                 Gọi API và quản lý trạng thái
+│   │   ├── api-docs.ts            Request mẫu cho trang docs
+│   │   ├── types.ts
+│   │   └── constants.ts
+│   ├── public/                    Postman Collection
+│   ├── .env.example               Địa chỉ BE
+│   ├── next.config.mjs            Chuyển /api sang BE
+│   ├── tsconfig.json
+│   └── package.json
+├── BE/                            Backend Node.js / TypeScript
+│   ├── src/
+│   │   ├── server.ts              HTTP server và bảng định tuyến
+│   │   ├── api/                   Các API đăng nhập, cảm biến, đèn, lịch sử
+│   │   ├── lib/                   MQTT, MySQL, dữ liệu mẫu, xử lý nghiệp vụ
+│   │   └── data/account.json      Tài khoản cố định
+│   ├── database/                  SQL tạo và cập nhật MySQL
+│   ├── scripts/                   Chạy dev và kiểm thử
+│   ├── .env.example               PORT, MQTT, MySQL
+│   ├── tsconfig.json
+│   └── package.json
+├── package.json                   Lệnh chạy và npm workspaces
+├── package-lock.json              Khóa phiên bản thư viện
+└── README.md
 ```
 
-`app/page.tsx` chỉ hiển thị `src/App.tsx`. Các màn hình chuyển bằng menu trong cùng trang `/`, chưa có URL riêng. Dùng tên `screens` vì `pages` là thư mục định tuyến đặc biệt của Next.js.
+FE không chứa API backend, MQTT hoặc MySQL. BE không phụ thuộc Next.js hoặc React. Dữ liệu mẫu được sinh duy nhất trong `BE/src/lib/demo-sensors.ts`, rồi gửi qua API cho FE.
 
-Khi sửa giao diện, mở file tương ứng trong `src/screens`. Khi sửa cách tải dữ liệu hoặc thao tác, mở `src/hooks/useIotDashboard.ts`. Các thành phần dùng chung nằm trong `src/components`.
+Sửa màn hình trong `FE/src/screens`; sửa cách FE tải dữ liệu trong `FE/src/hooks/useIotDashboard.ts`. Sửa nghiệp vụ ở `BE/src/lib`; sửa API ở `BE/src/api` và đăng ký đường dẫn mới trong `BE/src/server.ts`.
 
-`node_modules`, `.next-dev` và `.next` là thư mục thư viện hoặc file tự sinh.
+`FE/app/page.tsx` hiển thị `FE/src/App.tsx`. Năm màn hình chuyển bằng menu trong cùng trang `/`. `FE/.next-dev`, `FE/.next`, `BE/dist` và `node_modules` là file tự sinh.
+
+Bảng cảm biến có ô tìm thời gian theo giờ địa phương, nhập `HH:mm` hoặc `HH:mm:ss`. Nhật ký thiết bị cho chọn 5, 10, 50 hoặc 100 bản ghi mỗi trang; đổi bộ lọc hoặc số bản ghi sẽ về trang đầu.
 
 ## 3. Luồng dữ liệu
 
 ### Không có MQTT
 
 ```text
-Nút bật/tắt → API LED → lib/devices.ts → trạng thái và lịch sử trong RAM
+Nút bật/tắt → API LED → BE/src/lib/devices.ts → trạng thái và lịch sử trong RAM
 Dữ liệu cảm biến mẫu → API cảm biến → useIotDashboard.ts → các màn hình
 ```
 
@@ -125,8 +153,8 @@ Khi `MQTT_SIMULATION=true`, thiết bị và lịch sử dùng RAM, cảm biến
 
 ```text
 DHT11 + LDR → ESP8266 → hoan/sensor/telemetry
-    → lib/telemetry.ts → RAM hoặc MySQL → API cảm biến
-    → src/hooks/useIotDashboard.ts → giao diện
+    → BE/src/lib/telemetry.ts → RAM hoặc MySQL → API cảm biến
+    → FE/src/hooks/useIotDashboard.ts → giao diện
 
 Nút bật/tắt → API LED → hoan/device/control → ESP8266
     → hoan/device/ack → lưu trạng thái và lịch sử
@@ -142,7 +170,7 @@ Lệnh MQTT: `{"deviceId":1,"action":"ON"}`. ACK: `{"deviceId":1,"action":"ON","
 
 ## 4. Thử API
 
-Mở http://localhost:3000/docs, chọn endpoint, sửa JSON nếu cần rồi bấm **Gửi yêu cầu**. Hoặc nhập [Postman Collection](public/iot.postman_collection.json) và đặt `baseUrl=http://localhost:3000`.
+Mở http://localhost:3000/docs, chọn endpoint, sửa JSON nếu cần rồi bấm **Gửi yêu cầu**. Hoặc nhập [Postman Collection](FE/public/iot.postman_collection.json) và đặt `baseUrl=http://localhost:3000`.
 
 Thử theo thứ tự: `sensors/live` → `devices/status` → `leds/control` → `actions/history`.
 
@@ -186,20 +214,20 @@ ID cảm biến: `1` = nhiệt độ, `2` = độ ẩm, `3` = ánh sáng. ID đ�
 
 ### Vị trí code API
 
-Mỗi file `route.ts` trong `app/api` xử lý một đường dẫn. Hàm `GET`, `POST`, `PATCH`, `PUT` hoặc `DELETE` trong file tương ứng với phương thức HTTP. Thư mục `[id]` nhận ID từ URL; ví dụ `/api/leds/1` có `id=1`.
+BE đăng ký các URL trong `BE/src/server.ts` và gọi các hàm xử lý tương ứng trong `BE/src/api`. Hàm `GET`, `POST`, `PATCH`, `PUT` hoặc `DELETE` trong file tương ứng với phương thức HTTP. Thư mục `[id]` nhận ID từ URL; ví dụ `/api/leds/1` có `id=1`.
 
-| Thư mục trong `app/api` | File xử lý | Công việc |
+| Thư mục trong `BE/src/api` | File xử lý | Công việc |
 | --- | --- | --- |
-| `auth` | [login/route.ts](app/api/auth/login/route.ts), [register/route.ts](app/api/auth/register/route.ts) | Đăng nhập và đăng ký |
-| `sensors` | [live/route.ts](app/api/sensors/live/route.ts), [latest/route.ts](app/api/sensors/latest/route.ts), [history/route.ts](app/api/sensors/history/route.ts), [[id]/chart/route.ts](app/api/sensors/[id]/chart/route.ts) | Dữ liệu cảm biến và biểu đồ |
-| `devices` | [status/route.ts](app/api/devices/status/route.ts) | Đọc trạng thái tất cả đèn |
-| `leds` | [[id]/route.ts](app/api/leds/[id]/route.ts), [[id]/toggle/route.ts](app/api/leds/[id]/toggle/route.ts), [control/route.ts](app/api/leds/control/route.ts), [control-all/route.ts](app/api/leds/control-all/route.ts) | Đọc và bật/tắt đèn |
-| `actions` | [history/route.ts](app/api/actions/history/route.ts) | Lịch sử bật/tắt |
-| `schedules` | [route.ts](app/api/schedules/route.ts), [[id]/route.ts](app/api/schedules/[id]/route.ts) | Đọc, tạo và xóa lịch hẹn |
+| `auth` | [login/route.ts](BE/src/api/auth/login/route.ts), [register/route.ts](BE/src/api/auth/register/route.ts) | Đăng nhập và đăng ký |
+| `sensors` | [live/route.ts](BE/src/api/sensors/live/route.ts), [latest/route.ts](BE/src/api/sensors/latest/route.ts), [history/route.ts](BE/src/api/sensors/history/route.ts), [[id]/chart/route.ts](BE/src/api/sensors/[id]/chart/route.ts) | Dữ liệu cảm biến và biểu đồ |
+| `devices` | [status/route.ts](BE/src/api/devices/status/route.ts) | Đọc trạng thái tất cả đèn |
+| `leds` | [[id]/route.ts](BE/src/api/leds/[id]/route.ts), [[id]/toggle/route.ts](BE/src/api/leds/[id]/toggle/route.ts), [control/route.ts](BE/src/api/leds/control/route.ts), [control-all/route.ts](BE/src/api/leds/control-all/route.ts) | Đọc và bật/tắt đèn |
+| `actions` | [history/route.ts](BE/src/api/actions/history/route.ts) | Lịch sử bật/tắt |
+| `schedules` | [route.ts](BE/src/api/schedules/route.ts), [[id]/route.ts](BE/src/api/schedules/[id]/route.ts) | Đọc, tạo và xóa lịch hẹn |
 
 ### Tham số và kết quả từng API
 
-URL gốc: `http://localhost:3000`. Yêu cầu có body gửi JSON với header `Content-Type: application/json`. Các trường bên dưới là bắt buộc, trừ khi ghi là tùy chọn.
+URL BE trực tiếp: `http://127.0.0.1:4000`. Qua FE cũng có thể gọi `http://localhost:3000/api/...` nhờ proxy. Yêu cầu có body gửi JSON với header `Content-Type: application/json`. Các trường bên dưới là bắt buộc, trừ khi ghi là tùy chọn.
 
 **Đăng nhập và đăng ký**
 
@@ -263,7 +291,7 @@ Phản hồi lỗi có dạng `{ "status": "error", "message": "..." }`. Thời 
 
 - Chế độ không MQTT: trạng thái đèn và lịch sử mất khi server khởi động lại; dữ liệu cảm biến được sinh theo thời gian.
 - Khi tắt chế độ này, `DB_DRIVER=memory` lưu trong RAM; `DB_DRIVER=mysql` lưu cảm biến, thiết bị và lịch sử trong MySQL. Xem [hướng dẫn database](HUONG-DAN-DATABASE.md).
-- Tài khoản cố định nằm trong `data/account.json`; tài khoản đăng ký mới lưu trong RAM.
+- Tài khoản cố định nằm trong `BE/src/data/account.json`; tài khoản đăng ký mới lưu trong RAM.
 - Hồ sơ và liên kết dự án lưu trong localStorage của trình duyệt.
 - Token đăng nhập hiện là token demo; API chưa bắt buộc Bearer token hoặc có phân quyền hoàn chỉnh.
 - Lịch hẹn chỉ lưu/xóa cấu hình, chưa tự thực thi.

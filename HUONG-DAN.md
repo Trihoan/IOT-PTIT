@@ -2,7 +2,7 @@
 
 ## 1. Chuẩn bị
 
-- Cài Node.js phiên bản 20 trở lên.
+- Cài Node.js phiên bản 22.9 trở lên.
 - Mở Terminal hoặc PowerShell tại thư mục dự án `IOT`.
 
 ## 2. Cài đặt và chạy
@@ -11,7 +11,9 @@ Chạy các lệnh sau lần đầu tiên:
 
 ```bash
 npm install
-npm run dev
+npm run dev:be
+# Mở terminal khác tại thư mục gốc:
+npm run dev:fe
 ```
 
 Khi Terminal báo máy chủ đã sẵn sàng, mở trình duyệt tại:
@@ -29,7 +31,7 @@ http://localhost:3000
 - **Tên đăng nhập:** `HoanIOT`.
 - **Mật khẩu:** dùng mật khẩu đã yêu cầu khi tạo tài khoản.
 
-Bấm **Đăng nhập** để vào bảng điều khiển. Tài khoản HoanIOT được lưu cố định trong `data/account.json` với mật khẩu băm scrypt; không mất khi khởi động lại server và không cần MySQL. API kiểm tra đúng mật khẩu trước khi đăng nhập. Phiên đăng nhập vẫn là phiên demo; chưa có cơ chế phân quyền API.
+Bấm **Đăng nhập** để vào bảng điều khiển. Tài khoản HoanIOT được lưu cố định trong `BE/src/data/account.json` với mật khẩu băm scrypt; không mất khi khởi động lại server và không cần MySQL. API kiểm tra đúng mật khẩu trước khi đăng nhập. Phiên đăng nhập vẫn là phiên demo; chưa có cơ chế phân quyền API.
 
 ## 4. Tạo tài khoản demo
 
@@ -52,10 +54,10 @@ Nếu muốn dùng màn hình đăng ký:
 
 ## 6. Nếu trang không mở được
 
-- Kiểm tra Terminal vẫn đang chạy `npm run dev` và không báo lỗi.
+- Kiểm tra Terminal vẫn đang chạy `npm run dev:be` và `npm run dev:fe` và không báo lỗi.
 - Đảm bảo mở đúng `http://localhost:3000`.
 - Nếu cổng 3000 đã được ứng dụng khác sử dụng, Next.js sẽ báo địa chỉ/cổng khác trong Terminal; mở địa chỉ được báo.
-- Nếu vừa tải mã nguồn về máy mới, chạy `npm install` trước `npm run dev`.
+- Nếu vừa tải mã nguồn về máy mới, chạy `npm install` trước `npm run dev:be` và `npm run dev:fe`.
 
 ## Lưu ý
 

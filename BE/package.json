@@ -1,0 +1,21 @@
+{
+  "name": "iot-be",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env.local scripts/dev.cjs",
+    "build": "tsc",
+    "start": "node --env-file-if-exists=.env.local dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/check-offline.cjs && node scripts/check-mqtt-control.cjs && node scripts/check-http.cjs",
+    "check:database": "node --env-file-if-exists=.env.local scripts/check-database.mjs"
+  },
+  "dependencies": {
+    "mqtt": "^5.16.1",
+    "mysql2": "^3.24.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  }
+}
